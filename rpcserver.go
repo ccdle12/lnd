@@ -2298,6 +2298,44 @@ func (r *rpcServer) dispatchPaymentIntent(
 	}, nil
 }
 
+// validateChannelCapacities() will fetch all open channels from the db and check that
+// there is available capacity to route the payment intent.
+func validateChannelCapacities(r *rpcServer, paymentIntent rpcPaymentIntent) error {
+	// Retrieve the payment intent amount.
+	payAmt := paymentIntent.msat
+
+	// Retrieve all open channels available.
+	channels, err := r.server.chanDB.FetchAllOpenChannels()
+	if err != nil {
+		return err
+	}
+
+	// Get the number of open channels.
+	numChannels := len(channels)
+	if numChannels == 0 {
+		return errors.New("There aren't any open channels")
+	}
+
+	// Count of invalid channels, this count will increment if the channel cannot satisfy
+	// the payment amount. If the count of invalid channels equals the number of open
+	// channels, then there are no channels available with sufficients funds to send the
+	// payment.
+	invalidChannels := 0
+
+	// Loop through the channels, compare each channels local balance to the payAmt.
+	for _, channel := range channels {
+		if payAmt >= channel.LocalCommitment.LocalBalance {
+			invalidChannels++
+		}
+	}
+
+	if invalidChannels == numChannels {
+		return errors.New("There are no channels with enough funds")
+	}
+
+	return nil
+}
+
 // sendPayment takes a paymentStream (a source of pre-built routes or payment
 // requests) and continually attempt to dispatch payment requests written to
 // the write end of the stream. Responses will also be streamed back to the
@@ -2370,6 +2408,23 @@ func (r *rpcServer) sendPayment(stream *paymentStream) error {
 				// wait for the next payment.
 				payIntent, err := extractPaymentIntent(nextPayment)
 				if err != nil {
+					if err := stream.send(&lnrpc.SendResponse{
+						PaymentError: err.Error(),
+					}); err != nil {
+						select {
+						case errChan <- err:
+						case <-reqQuit:
+							return
+						}
+					}
+					continue
+				}
+
+				// Check the capacity of all available open
+				// channels. If there are no open channels
+				// that can satisfy the amount in the payment
+				// intent, then return an error.
+				if err := validateChannelCapacities(r, payIntent); err != nil {
 					if err := stream.send(&lnrpc.SendResponse{
 						PaymentError: err.Error(),
 					}); err != nil {
@@ -2511,6 +2566,14 @@ func (r *rpcServer) sendPaymentSync(ctx context.Context,
 	payIntent, err := extractPaymentIntent(nextPayment)
 	if err != nil {
 		return nil, err
+	}
+
+	// Check that all available channels have sufficient capacity to route
+	// the payment.
+	if err = validateChannelCapacities(r, payIntent); err != nil {
+		return &lnrpc.SendResponse{
+			PaymentError: err.Error(),
+		}, err
 	}
 
 	// With the payment validated, we'll now attempt to dispatch the

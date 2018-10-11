@@ -789,6 +789,99 @@ func txStr(chanPoint *lnrpc.ChannelPoint) string {
 	return cp.String()
 }
 
+// TODO (ccdle12):
+//testUnavaiableChannelCapacities tests the failed attempts to send transactions,
+// due to no channels available with sufficient local balance.
+func testUnavailableChannelCapacities(net *lntest.NetworkHarness, t *harnessTest) {
+	//1. create a context timeout
+	timeout := time.Duration(time.Second * 5)
+	ctxb := context.Background()
+
+	ctx, _ := context.WithTimeout(ctxb, timeout)
+
+	// 2. Set the channel amount and push Amount
+	chanAmt := btcutil.Amount(100000)
+	pushAmt := btcutil.Amount(10000)
+
+	// 649
+	//3. Create the channel between alice -> bob
+	chanPoint := openChannelAndAssert(
+		ctx, t, net, net.Alice, net.Bob,
+		lntest.OpenChannelParams{
+			Amt:     chanAmt,
+			PushAmt: pushAmt,
+		},
+	)
+
+	//657
+	//4. Confirm channel has been opened for both parties
+	ctx, _ = context.WithTimeout(ctxb, time.Second*15)
+	err := net.Alice.WaitForNetworkChannelOpen(ctx, chanPoint)
+	if err != nil {
+		t.Fatalf("alice didn't report channel %v", err)
+	}
+
+	err = net.Bob.WaitForNetworkChannelOpen(ctx, chanPoint)
+	if err != nil {
+		t.Fatalf("bob didn't report channel: %v", err)
+	}
+
+	// Confirm that both channels have the expected amount.
+	balReq := &lnrpc.ChannelBalanceRequest{}
+	aliceBal, err := net.Alice.ChannelBalance(ctxb, balReq)
+	if err != nil {
+		t.Fatalf("unable to get alice's balance: %v", err)
+	}
+
+	bobBal, err := net.Bob.ChannelBalance(ctxb, balReq)
+	if err != nil {
+		t.Fatalf("unable to get bob's balance: %v", err)
+	}
+
+	if aliceBal.Balance != int64(chanAmt-pushAmt-calcStaticFee(0)) {
+		t.Fatalf("alice's balance is incorrect: expected %v got %v",
+			chanAmt-pushAmt-calcStaticFee(0), aliceBal)
+	}
+
+	if bobBal.Balance != int64(pushAmt) {
+		t.Fatalf("bob's balance is incorrect: expected %v got %v",
+			pushAmt, bobBal.Balance)
+	}
+
+	// Bob creates an invoice that is greater than Alice's local balance.
+	// capacity: 16500393
+	const paymentAmt = 1000000
+	preimage := bytes.Repeat([]byte("A"), 32)
+	invoice := &lnrpc.Invoice{
+		Memo:      "testing",
+		RPreimage: preimage,
+		Value:     paymentAmt,
+	}
+	invoiceResp, err := net.Bob.AddInvoice(ctxb, invoice)
+	if err != nil {
+		t.Fatalf("unable to add invoice: %v", err)
+	}
+
+	// Alice attempts to pay Bob's invoice.
+	sendReq := &lnrpc.SendRequest{
+		PaymentRequest: invoiceResp.PaymentRequest,
+	}
+	ctx, _ = context.WithTimeout(ctxb, timeout)
+	resp, err := net.Alice.SendPaymentSync(ctx, sendReq)
+	if err == nil {
+		t.Fatalf("error should be returned from sending a payment with " +
+			"insufficient fund.")
+	}
+	if err.Error() != "rpc error: code = Unknown desc = There are no channels with enough funds" {
+		t.Fatalf("error should have been returned as no channels with enough funds: %v", err.Error())
+	}
+
+	// TODO (ccdle12): resp keeps getting returned as nil
+	// if resp == nil {
+	// 	t.Fatalf("resp should not have been nil")
+	// }
+}
+
 // expectedChanUpdate houses params we expect a ChannelUpdate to advertise.
 type expectedChanUpdate struct {
 	advertisingNode string
@@ -12255,6 +12348,11 @@ var testsCases = []*testCase{
 	{
 		name: "unconfirmed channel funding",
 		test: testUnconfirmedChannelFunding,
+	},
+	// TODO (ccdle12)
+	{
+		name: "unavailable channel capacity",
+		test: testUnavailableChannelCapacities,
 	},
 	{
 		name: "update channel policy",
