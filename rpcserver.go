@@ -811,9 +811,10 @@ func (r *rpcServer) OpenChannel(in *lnrpc.OpenChannelRequest,
 		pushAmt:         lnwire.NewMSatFromSatoshis(remoteInitialBalance),
 		minHtlc:         minHtlc,
 		fundingFeePerKw: feeRate,
-		private:         in.Private,
-		remoteCsvDelay:  remoteCsvDelay,
-		minConfs:        in.MinConfs,
+		// NOTE: (ccdle12) adding or check for command line private or config private
+		private:        in.Private || cfg.Private,
+		remoteCsvDelay: remoteCsvDelay,
+		minConfs:       in.MinConfs,
 	}
 
 	updateChan, errChan := r.server.OpenChannel(req)

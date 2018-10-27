@@ -52,6 +52,8 @@ const (
 	defaultInactiveChanTimeout = 20 * time.Minute
 	defaultMaxLogFiles         = 3
 	defaultMaxLogFileSize      = 10
+	// NOTE: (ccdle12): adding default private node
+	defaultPrivateNode = false
 
 	defaultTorSOCKSPort            = 9050
 	defaultTorDNSHost              = "soa.nodes.lightning.directory"
@@ -180,6 +182,8 @@ type config struct {
 	LogDir         string `long:"logdir" description:"Directory to log output."`
 	MaxLogFiles    int    `long:"maxlogfiles" description:"Maximum logfiles to keep (0 for no rotation)"`
 	MaxLogFileSize int    `long:"maxlogfilesize" description:"Maximum logfile size in MB"`
+	// NOTE: (ccdle12): adding private flag
+	Private bool `long:"private" description:"Sets the node as private, it will open all channels as private, these channels will not be advertised and the node will not forward any HTLC's unless receiving node has made it possible."`
 
 	// We'll parse these 'raw' string arguments into real net.Addrs in the
 	// loadConfig function. We need to expose the 'raw' strings so the
@@ -259,6 +263,8 @@ func loadConfig() (*config, error) {
 		LogDir:         defaultLogDir,
 		MaxLogFiles:    defaultMaxLogFiles,
 		MaxLogFileSize: defaultMaxLogFileSize,
+		// NOTE: (ccdle12):
+		Private: defaultPrivateNode,
 		Bitcoin: &chainConfig{
 			MinHTLC:       defaultBitcoinMinHTLCMSat,
 			BaseFee:       defaultBitcoinBaseFeeMSat,
