@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/btcec"
+	// NOTE: (ccdle12): adding config
+	// "github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
 	"github.com/coreos/bbolt"
@@ -176,6 +178,10 @@ type Config struct {
 	// LogEventTicker is a signal instructing the htlcswitch to log
 	// aggregate stats about it's forwarding during the last interval.
 	LogEventTicker ticker.Ticker
+
+	// NOTE: (ccdle12)
+	// A bool to disable forwarding of any htlcs.
+	RejectHTLC bool
 }
 
 // Switch is the central messaging bus for all incoming/outgoing HTLCs.
@@ -293,6 +299,10 @@ func New(cfg Config, currentHeight uint32) (*Switch, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// NOTE: (ccdle12)
+	// SWITCH ALREADY HAS A CONFIG
+	log.Debugf("CREATING INSTANCE OF HTLC SWITCH!!!")
 
 	return &Switch{
 		bestHeight:        currentHeight,
@@ -706,6 +716,7 @@ func (s *Switch) proxyFwdErrs(num *int, wg *sync.WaitGroup,
 	}
 }
 
+// NOTE: (ccdle12) This is where the packets are sent
 // route sends a single htlcPacket through the switch and synchronously awaits a
 // response.
 func (s *Switch) route(packet *htlcPacket) error {
@@ -716,6 +727,10 @@ func (s *Switch) route(packet *htlcPacket) error {
 
 	select {
 	case s.htlcPlex <- command:
+		log.Debugf("!!!***RECEIVING COMMAND FOR HTLC PLEX***!!!: HTLC AMOUNT BEING CREATED: %v", command.pkt.amount)
+		log.Debugf("!!!***RECEIVING COMMAND FOR HTLC PLEX***!!!: INCOMING AMOUNT ON THE LINK: %v", command.pkt.incomingAmount)
+		log.Debugf("!!!***RECEIVING COMMAND FOR HTLC PLEX***!!!: INCOMING AMOUNT OF HTLC: %v", command.pkt.incomingHtlcAmt)
+		log.Debugf("!!!***RECEIVING COMMAND FOR HTLC PLEX***!!!: INCOMING HTLC ID: %v", command.pkt.incomingHTLCID)
 	case <-s.quit:
 		return ErrSwitchExiting
 	}
@@ -1014,6 +1029,18 @@ func (s *Switch) handlePacketForward(packet *htlcPacket) error {
 	// payment circuit within our internal state so we can properly forward
 	// the ultimate settle message back latter.
 	case *lnwire.UpdateAddHTLC:
+		// NOTE: (ccdle12)
+		// Is there where we should block forwarding of HTLC?
+		log.Debugf("****!!!!HANDLE PACKET FORWARDING CALLED!!!!****: %v", htlc.ID)
+		log.Debugf("****!!!!RETURNING PACKET FAILED IN UPDATEADDHTLC!!!!****")
+		// NOTE: (ccdle12): If some flag was set and the incomingChanID is NOT
+		// the source.
+		if s.cfg.RejectHTLC && packet.incomingChanID != sourceHop {
+			failure := &lnwire.FailUnknownNextPeer{}
+			addErr := fmt.Errorf("node is unable to forward any htlcs")
+			return s.failAddPacket(packet, failure, addErr)
+		}
+
 		if packet.incomingChanID == sourceHop {
 			// A blank incomingChanID indicates that this is
 			// a pending user-initiated payment.
@@ -1583,10 +1610,13 @@ out:
 			// With the message processed, we'll now close out
 			close(resolutionMsg.doneChan)
 
-		// A new packet has arrived for forwarding, we'll interpret the
-		// packet concretely, then either forward it along, or
-		// interpret a return packet to a locally initialized one.
+			// A new packet has arrived for forwarding, we'll interpret the
+			// packet concretely, then either forward it along, or
+			// interpret a return packet to a locally initialized one.
+			log.Debugf("!!!!****IN htlcForwarder****!!!!")
 		case cmd := <-s.htlcPlex:
+			log.Debugf("!!!!****RECEIVING FORWARDED PACKET****!!!!")
+			log.Debugf("!!!!****RECEIVING FORWARDED PACKET****!!!!: Incoming Chan ID: %v", cmd.pkt.incomingChanID)
 			cmd.err <- s.handlePacketForward(cmd.pkt)
 
 		// When this time ticks, then it indicates that we should
