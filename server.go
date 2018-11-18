@@ -344,6 +344,9 @@ func newServer(listenAddrs []net.Addr, chanDB *channeldb.DB, cc *chainControl,
 			htlcswitch.DefaultFwdEventInterval),
 		LogEventTicker: ticker.New(
 			htlcswitch.DefaultLogInterval),
+		// NOTE: (ccdle12)
+		// reject htlc
+		RejectHTLC: cfg.RejectHTLC,
 	}, uint32(currentHeight))
 	if err != nil {
 		return nil, err
