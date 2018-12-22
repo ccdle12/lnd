@@ -1527,6 +1527,7 @@ message RoutingPolicy {
     int64 fee_base_msat = 3 [json_name = "fee_base_msat"];
     int64 fee_rate_milli_msat = 4 [json_name = "fee_rate_milli_msat"];
     bool disabled = 5 [json_name = "disabled"];
+    uint32 last_update = 6 [json_name = "last_update"];
 }
 
 /**
