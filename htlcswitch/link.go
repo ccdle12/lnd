@@ -1539,8 +1539,8 @@ func (l *channelLink) cleanupSpuriousResponse(pkt *htlcPacket) {
 // updates from the upstream peer. The upstream peer is the peer whom we have a
 // direct channel with, updating our respective commitment chains.
 func (l *channelLink) handleUpstreamMsg(msg lnwire.Message) {
+	log.Debugf("CCDLE12: HANDLING RECEIVED HTLC!!!")
 	switch msg := msg.(type) {
-
 	case *lnwire.UpdateAddHTLC:
 		// We just received an add request from an upstream peer, so we
 		// add it to our state machine, then add the HTLC to our
@@ -2240,6 +2240,8 @@ func (l *channelLink) String() string {
 func (l *channelLink) HandleSwitchPacket(pkt *htlcPacket) error {
 	l.tracef("received switch packet inkey=%v, outkey=%v",
 		pkt.inKey(), pkt.outKey())
+
+	log.Debugf("CCDLE12: HANDLING SWITCH PACKET!!!")
 
 	l.mailBox.AddPacket(pkt)
 	return nil

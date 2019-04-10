@@ -653,6 +653,7 @@ func (d *DB) AcceptOrSettleInvoice(paymentHash [32]byte,
 			return err
 		}
 
+		log.Debugf("CCDLE12: INVOICE IS BEING MARKED AS PAID!!!")
 		// Check the invoice index to see if an invoice paying to this
 		// hash exists within the DB.
 		invoiceNum := invoiceIndex.Get(paymentHash[:])
