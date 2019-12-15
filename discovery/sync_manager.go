@@ -2,6 +2,7 @@ package discovery
 
 import (
 	"errors"
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -640,6 +641,7 @@ func (m *SyncManager) PruneSyncState(peer route.Vertex) {
 // GossipSyncer returns the associated gossip syncer of a peer. The boolean
 // returned signals whether there exists a gossip syncer for the peer.
 func (m *SyncManager) GossipSyncer(peer route.Vertex) (*GossipSyncer, bool) {
+	fmt.Println("CCDLE12 DEBUG: GOSSIP SYNCER CALLED")
 	m.syncersMu.Lock()
 	defer m.syncersMu.Unlock()
 	return m.gossipSyncer(peer)

@@ -493,6 +493,7 @@ func (d *AuthenticatedGossiper) ProcessRemoteAnnouncement(msg lnwire.Message,
 	// If a peer is updating its current update horizon, then we'll dispatch
 	// that directly to the proper GossipSyncer.
 	case *lnwire.GossipTimestampRange:
+		fmt.Printf("CCDLE12 DEBUG: ProcecssRemoteAnnouncement called\n")
 		syncer, ok := d.syncMgr.GossipSyncer(peer.PubKey())
 		if !ok {
 			log.Warnf("Gossip syncer for peer=%x not found",
@@ -1558,6 +1559,7 @@ func (d *AuthenticatedGossiper) processNetworkAnnouncement(
 	}
 
 	var announcements []networkMsg
+	fmt.Println("CCDLE12 DEBUG: calling processNetworkAnnouncement")
 
 	switch msg := nMsg.msg.(type) {
 

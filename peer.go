@@ -971,6 +971,7 @@ func newDiscMsgStream(p *peer) *msgStream {
 func (p *peer) readHandler() {
 	defer p.wg.Done()
 
+	fmt.Println("CCDLE12 DEBUG: readHandler() called")
 	// We'll stop the timer after a new messages is received, and also
 	// reset it after we process the next message.
 	idleTimer := time.AfterFunc(idleTimeout, func() {
@@ -1042,6 +1043,8 @@ out:
 			targetChan   lnwire.ChannelID
 		)
 
+		debug_msg := nextMsg.MsgType()
+		fmt.Printf("CCDLE12 DEBUG: readHandler() msg type: %v\n", debug_msg)
 		switch msg := nextMsg.(type) {
 		case *lnwire.Pong:
 			// When we receive a Pong message in response to our

@@ -2404,6 +2404,7 @@ func shouldDropLocalConnection(local, remote *btcec.PublicKey) bool {
 //
 // NOTE: This function is safe for concurrent access.
 func (s *server) InboundPeerConnected(conn net.Conn) {
+	fmt.Printf("CCDLE12 DEBUG: InboundPeerConnected called")
 	// Exit early if we have already been instructed to shutdown, this
 	// prevents any delayed callbacks from accidentally registering peers.
 	if s.Stopped() {
@@ -2683,6 +2684,7 @@ func (s *server) peerConnected(conn net.Conn, connReq *connmgr.ConnReq,
 	// offered that would trigger channel closure. In case of outgoing
 	// htlcs, an extra block is added to prevent the channel from being
 	// closed when the htlc is outstanding and a new block comes in.
+	fmt.Printf("CCDLE12 DEBUG: RECEIVED PEER CONNECTION")
 	p, err := newPeer(
 		conn, connReq, s, peerAddr, inbound, localFeatures,
 		cfg.ChanEnableTimeout,
@@ -2695,7 +2697,6 @@ func (s *server) peerConnected(conn net.Conn, connReq *connmgr.ConnReq,
 
 	// TODO(roasbeef): update IP address for link-node
 	//  * also mark last-seen, do it one single transaction?
-
 	s.addPeer(p)
 
 	// Dispatch a goroutine to asynchronously start the peer. This process

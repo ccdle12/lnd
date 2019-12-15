@@ -3861,6 +3861,7 @@ func (r *rpcServer) GetNodeInfo(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf("pubkey: %v", pubKey)
 
 	// With the public key decoded, attempt to fetch the node corresponding
 	// to this public key. If the node cannot be found, then an error will
