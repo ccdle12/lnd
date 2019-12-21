@@ -382,6 +382,7 @@ func (l *LightningWallet) ActiveReservations() []*ChannelReservation {
 // requestHandler is the primary goroutine(s) responsible for handling, and
 // dispatching replies to all messages.
 func (l *LightningWallet) requestHandler() {
+	fmt.Println("DEBUG CCDLE12: requestHandler")
 out:
 	for {
 		select {
@@ -429,6 +430,7 @@ out:
 func (l *LightningWallet) InitChannelReservation(
 	req *InitFundingReserveMsg) (*ChannelReservation, error) {
 
+	fmt.Println("DEBUG CCDLE12: InitChannelReservation")
 	req.resp = make(chan *ChannelReservation, 1)
 	req.err = make(chan error, 1)
 

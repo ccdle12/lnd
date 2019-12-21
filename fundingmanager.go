@@ -491,6 +491,7 @@ func newFundingManager(cfg fundingConfig) (*fundingManager, error) {
 // to the funding manager.
 func (f *fundingManager) Start() error {
 	var err error
+	fmt.Println("DEBUG CCDLE12: Start() (fundingmanager)")
 	f.started.Do(func() {
 		err = f.start()
 	})
@@ -500,6 +501,7 @@ func (f *fundingManager) Start() error {
 func (f *fundingManager) start() error {
 	fndgLog.Tracef("Funding manager running")
 
+	fmt.Println("DEBUG CCDLE12: start() (fundingmanager)")
 	// Upon restart, the Funding Manager will check the database to load any
 	// channels that were  waiting for their funding transactions to be
 	// confirmed on the blockchain at the time when the daemon last went
@@ -739,6 +741,7 @@ func (f *fundingManager) failFundingFlow(peer lnpeer.Peer, tempChanID [32]byte,
 func (f *fundingManager) reservationCoordinator() {
 	defer f.wg.Done()
 
+	fmt.Println("DEBUG CCDLE12: reservationCoordinator called")
 	zombieSweepTicker := time.NewTicker(f.cfg.ZombieSweeperInterval)
 	defer zombieSweepTicker.Stop()
 
@@ -791,6 +794,7 @@ func (f *fundingManager) advanceFundingState(channel *channeldb.OpenChannel,
 
 	defer f.wg.Done()
 
+	fmt.Println("DEBUG CCDLE12: advanceFundingState")
 	// If the channel is still pending we must wait for the funding
 	// transaction to confirm.
 	if channel.IsPending {
@@ -981,6 +985,7 @@ func (f *fundingManager) stateStep(channel *channeldb.OpenChannel,
 func (f *fundingManager) advancePendingChannelState(
 	channel *channeldb.OpenChannel, pendingChanID [32]byte) error {
 
+	fmt.Println("DEBUG CCDLE12: advancePendingChannelState")
 	confChannel, err := f.waitForFundingWithTimeout(channel)
 	if err == ErrConfirmationTimeout {
 		// We'll get a timeout if the number of blocks mined
@@ -2071,6 +2076,7 @@ func (f *fundingManager) handleFundingConfirmation(
 	completeChan *channeldb.OpenChannel,
 	confChannel *confirmedChannel) error {
 
+	fmt.Println("DEBUG CCDLE12: handleFundingConfirmation")
 	fundingPoint := completeChan.FundingOutpoint
 	chanID := lnwire.NewChanIDFromOutPoint(&fundingPoint)
 
@@ -2100,6 +2106,7 @@ func (f *fundingManager) handleFundingConfirmation(
 			err)
 	}
 
+	// NOTE(ccdle12): THIS IS WHERE WE ADD THE CHANNEL TO THE DB
 	// Now that the channel has been fully confirmed and we successfully
 	// saved the opening state, we'll mark it as open within the database.
 	err = completeChan.MarkAsOpen(confChannel.shortChanID)
@@ -2760,6 +2767,7 @@ func (f *fundingManager) announceChannel(localIDKey, remoteIDKey, localFundingKe
 // to initiate a single funder workflow with the source peer.
 // TODO(roasbeef): re-visit blocking nature..
 func (f *fundingManager) initFundingWorkflow(peer lnpeer.Peer, req *openChanReq) {
+	fmt.Println("DEBUG CCDLE12: initFundingWorkflow")
 	f.fundingRequests <- &initFundingMsg{
 		peer:        peer,
 		openChanReq: req,
@@ -2820,6 +2828,7 @@ func (f *fundingManager) handleInitFundingMsg(msg *initFundingMsg) {
 		remoteCsvDelay = msg.remoteCsvDelay
 	)
 
+	fmt.Println("DEBUG CCDLE12: handleInitFundingMsg")
 	// We'll determine our dust limit depending on which chain is active.
 	var ourDustLimit btcutil.Amount
 	switch registeredChains.PrimaryChain() {

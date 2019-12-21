@@ -3288,6 +3288,7 @@ func (s *server) OpenChannel(
 	if req.fundingFeePerKw == 0 {
 		estimator := s.cc.feeEstimator
 		feeRate, err := estimator.EstimateFeePerKW(6)
+		// feeRate, err := estimator.EstimateFeePerKW(0)
 		if err != nil {
 			req.err <- err
 			return req.updates, req.err

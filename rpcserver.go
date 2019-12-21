@@ -1489,6 +1489,8 @@ func (r *rpcServer) OpenChannel(in *lnrpc.OpenChannelRequest,
 	if err != nil {
 		return err
 	}
+	// var minConfs int32
+	// minConfs = 0
 
 	var (
 		nodePubKey      *btcec.PublicKey
@@ -1504,6 +1506,7 @@ func (r *rpcServer) OpenChannel(in *lnrpc.OpenChannelRequest,
 
 	// Parse the raw bytes of the node key into a pubkey object so we
 	// can easily manipulate it.
+	// nodePubKey, err := btcec.ParsePubKey(in.NodePubkey, btcec.S256())
 	nodePubKey, err = btcec.ParsePubKey(in.NodePubkey, btcec.S256())
 	if err != nil {
 		return err

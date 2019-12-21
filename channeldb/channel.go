@@ -764,6 +764,7 @@ func (c *OpenChannel) MarkAsOpen(openLoc lnwire.ShortChannelID) error {
 	c.Lock()
 	defer c.Unlock()
 
+	fmt.Println("DEBUG CCDLE12: MarkAsOpen called")
 	if err := c.Db.Update(func(tx *bbolt.Tx) error {
 		chanBucket, err := fetchChanBucket(
 			tx, c.IdentityPub, &c.FundingOutpoint, c.ChainHash,
@@ -1129,6 +1130,7 @@ func (c *OpenChannel) clearChanStatus(status ChannelStatus) error {
 // putChannel serializes, and stores the current state of the channel in its
 // entirety.
 func putOpenChannel(chanBucket *bbolt.Bucket, channel *OpenChannel) error {
+	fmt.Println("DEBUG CCDLE12: putOpenChannel called")
 	// First, we'll write out all the relatively static fields, that are
 	// decided upon initial channel creation.
 	if err := putChanInfo(chanBucket, channel); err != nil {
