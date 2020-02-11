@@ -3,6 +3,8 @@ package lnd
 import (
 	"bytes"
 	"container/list"
+	// "encoding/binary"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net"
@@ -1021,6 +1023,7 @@ func (p *peer) readHandler() {
 	discStream := newDiscMsgStream(p)
 	discStream.Start()
 	defer discStream.Stop()
+	// TODO(ccdle12): how dis work?
 out:
 	for atomic.LoadInt32(&p.disconnect) == 0 {
 		nextMsg, err := p.readNextMessage()
@@ -1082,10 +1085,14 @@ out:
 			atomic.StoreInt64(&p.pingTime, delay)
 
 		case *lnwire.Ping:
+			fmt.Println("DEBUG CCDLE12: Ping msg from peer")
+			fmt.Printf("DEBUG: PING MSG in bytes: %b\n", msg)
+			fmt.Printf("DEBUG: PING MSG : %v\n", msg)
 			pongBytes := make([]byte, msg.NumPongBytes)
 			p.queueMsg(lnwire.NewPong(pongBytes), nil)
 
 		case *lnwire.OpenChannel:
+			fmt.Println("DEBUG CCDLE12: OpenChannel msg from peer")
 			p.server.fundingMgr.processFundingOpen(msg, p)
 		case *lnwire.AcceptChannel:
 			p.server.fundingMgr.processFundingAccept(msg, p)
@@ -1484,6 +1491,7 @@ func (p *peer) writeMessage(msg lnwire.Message) error {
 		// will buffer the ciphertext on the underlying connection. We
 		// will defer flushing the message until the write pool has been
 		// released.
+		fmt.Printf("DEBUG: writeMessage HEX: %v\n", hex.EncodeToString(buf.Bytes()))
 		return noiseConn.WriteMessage(buf.Bytes())
 	})
 	if err != nil {
@@ -1769,6 +1777,7 @@ out:
 		// funding workflow. We'll initialize the necessary local
 		// state, and notify the htlc switch of a new link.
 		case newChanReq := <-p.newChannels:
+			fmt.Println("DEBUG CCDLE12: Receiving newChannl")
 			newChan := newChanReq.channel
 			chanPoint := &newChan.FundingOutpoint
 			chanID := lnwire.NewChanIDFromOutPoint(chanPoint)
@@ -2461,6 +2470,18 @@ func (p *peer) handleInitMsg(msg *lnwire.Init) error {
 			err)
 	}
 
+	var bw bytes.Buffer
+	_ = msg.Encode(&bw, 0)
+	payload := bw.Bytes()
+	// lenp := len(payload)
+
+	fmt.Printf("DEBUG: handleInitMsg: %v\n", hex.EncodeToString(payload))
+	fmt.Printf("DEBUG: handleInitMsg GLOBAL FEATURES: %v\n", msg.GlobalFeatures)
+	fmt.Printf("DEBUG: handleInitMsg FEATURES: %v\n", msg.Features)
+	// for _, bit := range msg.GlobalFeatures.features {
+	// fmt.Printf("DEBUG: FEATURE BIT: %v\n", bit)
+	// }
+
 	// Then, finalize the remote feature vector providing the flatteneed
 	// feature bit namespace.
 	p.remoteFeatures = lnwire.NewFeatureVector(
@@ -2511,6 +2532,12 @@ func (p *peer) sendInitMsg() error {
 		p.legacyFeatures.RawFeatureVector,
 		p.features.RawFeatureVector,
 	)
+
+	var bw bytes.Buffer
+	_ = msg.Encode(&bw, 0)
+	payload := bw.Bytes()
+	// lenp := len(payload)
+	fmt.Printf("DEBUG: INIT MSG AS HEX: %v\n", hex.EncodeToString(payload))
 
 	return p.writeMessage(msg)
 }
@@ -2640,6 +2667,9 @@ func (p *peer) Address() net.Addr {
 // NOTE: Part of the lnpeer.Peer interface.
 func (p *peer) AddNewChannel(channel *channeldb.OpenChannel,
 	cancel <-chan struct{}) error {
+
+	fmt.Println("DEBUG CCDLE12: Adding new channel")
+	fmt.Printf("DEBUG CCDLE12: Adding new channel: {channel.FundingOutpoint.String()}\n")
 
 	errChan := make(chan error, 1)
 	newChanMsg := &newChannelMsg{

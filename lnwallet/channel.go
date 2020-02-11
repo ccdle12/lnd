@@ -6338,6 +6338,7 @@ func (lc *LightningChannel) RemoteNextRevocation() *btcec.PublicKey {
 	lc.RLock()
 	defer lc.RUnlock()
 
+	fmt.Println("CCDLE12 DEBUG: RemoteNextRevocation")
 	return lc.channelState.RemoteNextRevocation
 }
 

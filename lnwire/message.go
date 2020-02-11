@@ -8,6 +8,7 @@ package lnwire
 import (
 	"bytes"
 	"encoding/binary"
+	// "encoding/hex"
 	"fmt"
 	"io"
 )
@@ -279,6 +280,7 @@ func ReadMessage(r io.Reader, pver uint32) (Message, error) {
 	if _, err := io.ReadFull(r, mType[:]); err != nil {
 		return nil, err
 	}
+	// fmt.Printf("DEBUG: ReadMessage lnwire/message.go: mType: %x\n", hex.EncodeToString(mType))
 
 	msgType := MessageType(binary.BigEndian.Uint16(mType[:]))
 
@@ -291,6 +293,7 @@ func ReadMessage(r io.Reader, pver uint32) (Message, error) {
 	if err := msg.Decode(r, pver); err != nil {
 		return nil, err
 	}
+	fmt.Printf("DEBUG: Decoded msg lnwire/message.go: mType: %v\n", msg)
 
 	return msg, nil
 }

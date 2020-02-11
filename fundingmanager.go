@@ -63,7 +63,8 @@ const (
 	// Protocol. This limit is defined in BOLT-0002, and serves as an
 	// initial precautionary limit while implementations are battle tested
 	// in the real world.
-	MaxBtcFundingAmount = btcutil.Amount(1<<24) - 1
+	// MaxBtcFundingAmount = btcutil.Amount(1<<24) - 1
+	MaxBtcFundingAmount = btcutil.Amount(100000000)
 
 	// maxLtcFundingAmount is a soft-limit of the maximum channel size
 	// currently accepted on the Litecoin chain within the Lightning
@@ -1396,6 +1397,7 @@ func (f *fundingManager) handleFundingOpen(fmsg *fundingOpenMsg) {
 		FirstCommitmentPoint:  ourContribution.FirstCommitmentPoint,
 		UpfrontShutdownScript: ourContribution.UpfrontShutdown,
 	}
+	fmt.Println("DEBUG CCDLE12: Sending fundingAccpet lnwire message to peer")
 	if err := fmsg.peer.SendMessage(true, &fundingAccept); err != nil {
 		fndgLog.Errorf("unable to send funding response to peer: %v", err)
 		f.failFundingFlow(fmsg.peer, msg.PendingChannelID, err)

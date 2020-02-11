@@ -2,6 +2,7 @@ package brontide
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"math"
 	"net"
@@ -144,6 +145,7 @@ func (c *Conn) Read(b []byte) (n int, err error) {
 	// depleted, then we read the next record, and feed it into the
 	// buffer. Otherwise, we read directly from the buffer.
 	if c.readBuf.Len() == 0 {
+		fmt.Println("DEBUG CCDLE12: Read message in connection")
 		plaintext, err := c.noise.ReadMessage(c.conn)
 		if err != nil {
 			return 0, err
