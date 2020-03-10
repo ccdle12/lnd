@@ -2371,20 +2371,25 @@ func sendPaymentRequest(ctx *cli.Context, req *lnrpc.SendRequest) error {
 	data := ctx.String(dataFlag.Name)
 	if data != "" {
 		records := strings.Split(data, ",")
+		fmt.Printf("DEBUG CUSTOM DATA: records %v\n", records)
+
 		for _, r := range records {
 			kv := strings.Split(r, "=")
+			fmt.Printf("DEBUG CUSTOM DATA: kv %v\n", kv)
 			if len(kv) != 2 {
 				return errors.New("invalid data format: " +
 					"multiple equal signs in record")
 			}
 
 			recordID, err := strconv.ParseUint(kv[0], 10, 64)
+			fmt.Printf("DEBUG CUSTOM DATA: recordID %v\n", recordID)
 			if err != nil {
 				return fmt.Errorf("invalid data format: %v",
 					err)
 			}
 
 			hexValue, err := hex.DecodeString(kv[1])
+			fmt.Printf("DEBUG CUSTOM DATA: hexValue %v\n", hexValue)
 			if err != nil {
 				return fmt.Errorf("invalid data format: %v",
 					err)
