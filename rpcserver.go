@@ -2611,12 +2611,22 @@ func (r *rpcServer) ChannelBalance(ctx context.Context,
 		pendingOpenBalance += channel.LocalCommitment.LocalBalance.ToSatoshis()
 	}
 
-	rpcsLog.Debugf("[channelbalance] balance=%v pending-open=%v",
-		balance, pendingOpenBalance)
+	var limboBalance int64
+	resp, err := r.PendingChannels(
+		context.Background(), &lnrpc.PendingChannelsRequest{})
+	if err != nil {
+		return nil, err
+	}
+	limboBalance = resp.TotalLimboBalance
+
+	rpcsLog.Debugf("[channelbalance] balance=%v pending-open=%v "+
+		"limbo-balance=%v",
+		balance, pendingOpenBalance, limboBalance)
 
 	return &lnrpc.ChannelBalanceResponse{
 		Balance:            int64(balance),
 		PendingOpenBalance: int64(pendingOpenBalance),
+		LimboBalance:       limboBalance,
 	}, nil
 }
 

@@ -2129,6 +2129,9 @@ message ChannelBalanceResponse {
 
     /// Sum of channels pending balances denominated in satoshis
     int64 pending_open_balance = 2;
+
+    /// Sum of all limbo balances denominated in satoshis
+    int64 limbo_balance = 3;
 }
 
 message QueryRoutesRequest {

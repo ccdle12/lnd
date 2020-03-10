@@ -2123,6 +2123,11 @@
           "type": "string",
           "format": "int64",
           "title": "/ Sum of channels pending balances denominated in satoshis"
+        },
+        "limbo_balance": {
+          "type": "string",
+          "format": "int64",
+          "title": "/ Sum of all limbo balances denominated in satoshis"
         }
       }
     },
